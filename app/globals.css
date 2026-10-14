@@ -1,0 +1,18 @@
+@import "tailwindcss";
+
+html,
+body {
+  overflow-x: hidden;
+}
+
+body {
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+/* 16px inputs stop iOS from zooming in on focus */
+input,
+select,
+button {
+  font-size: 16px;
+}
