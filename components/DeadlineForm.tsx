@@ -1,15 +1,26 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
 const KINDS = ["assignment", "exam", "quiz", "project"] as const;
+
+// Today + 7 days as YYYY-MM-DD in the user's own timezone (matches the DB default).
+function defaultDueDate() {
+  const d = new Date();
+  d.setDate(d.getDate() + 7);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
 
 export default function DeadlineForm() {
   const router = useRouter();
   const [title, setTitle] = useState("");
   const [dueDate, setDueDate] = useState("");
+
+  // Prefill after mount so server and browser render the same HTML.
+  useEffect(() => setDueDate(defaultDueDate()), []);
   const [course, setCourse] = useState("");
   const [kind, setKind] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -22,7 +33,7 @@ export default function DeadlineForm() {
     setError(null);
     setSaving(true);
 
-    // Only send what the user filled in; the database fills the defaults.
+    // Only send what is filled in; the database fills the defaults (an emptied date falls back to today + 7).
     const row: Record<string, string> = { title: trimmed };
     if (dueDate) row.due_date = dueDate;
     if (course.trim()) row.course = course.trim();
@@ -33,7 +44,7 @@ export default function DeadlineForm() {
     if (error) return setError(error.message);
 
     setTitle("");
-    setDueDate("");
+    setDueDate(defaultDueDate());
     setCourse("");
     setKind("");
     router.refresh();
@@ -44,26 +55,33 @@ export default function DeadlineForm() {
 
   return (
     <form onSubmit={onSubmit} className="mt-4 rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
-      <label className="block text-sm font-medium text-slate-700">
-        What&apos;s due?
-        <input
-          type="text"
-          data-testid="core-input"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="e.g. Quiz 3 – Statistics"
-          maxLength={200}
-          className={fieldClass}
-        />
-      </label>
+      <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_11rem]">
+        <label className="block min-w-0 text-sm font-medium text-slate-700">
+          What&apos;s due?
+          <input
+            type="text"
+            data-testid="core-input"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="e.g. Quiz 3 – Statistics"
+            maxLength={200}
+            className={fieldClass}
+          />
+        </label>
+        <label className="block min-w-0 text-sm font-medium text-slate-700">
+          Due date
+          <input
+            type="date"
+            value={dueDate}
+            onChange={(e) => setDueDate(e.target.value)}
+            className={`${fieldClass} min-w-0`}
+          />
+        </label>
+      </div>
 
       <details className="mt-3 text-sm">
-        <summary className="cursor-pointer py-2 text-slate-600">More options (date, course, type)</summary>
-        <div className="mt-2 grid gap-3 sm:grid-cols-3">
-          <label className="block font-medium text-slate-700">
-            Due date
-            <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} className={fieldClass} />
-          </label>
+        <summary className="cursor-pointer py-2 text-slate-600">More options (course, type)</summary>
+        <div className="mt-2 grid gap-3 sm:grid-cols-2">
           <label className="block font-medium text-slate-700">
             Course
             <input
@@ -87,7 +105,7 @@ export default function DeadlineForm() {
             </select>
           </label>
         </div>
-        <p className="mt-2 text-slate-500">Leave empty: due in 7 days, course &quot;General&quot;, type assignment.</p>
+        <p className="mt-2 text-slate-500">Leave empty: course &quot;General&quot;, type assignment.</p>
       </details>
 
       {error && (
