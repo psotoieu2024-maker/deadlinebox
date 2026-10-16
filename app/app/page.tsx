@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import DeadlineForm from "@/components/DeadlineForm";
 import DeleteButton from "@/components/DeleteButton";
+import DueLabel from "@/components/DueLabel";
 
 export const metadata = { title: "My deadlines · DeadlineBox" };
 
@@ -67,9 +68,12 @@ export default async function AppPage() {
                   </time>
                   <span className="break-words"> · {d.course}</span>
                 </p>
-                <span className="mt-2 inline-block rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium capitalize text-slate-700">
-                  {d.kind}
-                </span>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <DueLabel dueDate={d.due_date} />
+                  <span className="inline-block rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium capitalize text-slate-700">
+                    {d.kind}
+                  </span>
+                </div>
               </div>
               <DeleteButton id={d.id} title={d.title} />
             </li>
